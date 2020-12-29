@@ -242,16 +242,26 @@ const resolvePromise = (promise2, x, resolve, reject) => {
 }
 ```
 
-至此 一个 符合 promise A+ 规范的 promise 基本完成
+## 嵌套问题优化
 
-## 规范测试
-
-- 全局安装 `promises-aplus-tests` 进行规范测试， `npm i promises-aplus-tests -g`
-- 编写测试函数
-- 终端运行`promises-aplus-tests promise.js`
+在 `promise` 使用中经常用于封装异步请求时候会有以下代码师范
 
 ```javascript
-// 测试 promise 是否符合规范
+getData() {
+  return new Promise((resolve,reject)=>{
+    this.api.getList({data}).then(res=>{
+      if(!成功) {
+        reject(res)
+      }
+      resolve(res)
+    })
+  })
+}
+```
+
+以上代码中`promise`形成嵌套，可将 `promise` `resolve reject` 进行中间缓存来解决嵌套 添加 `defer` 方法
+
+```javascript
 Promise.defer = Promise.deferred = function () {
   let dfd = {}
   dfd.promise = new Promise((resolve, reject) => {
@@ -262,6 +272,30 @@ Promise.defer = Promise.deferred = function () {
 }
 module.export = Promise
 ```
+
+以上案例代码使用改版后的 promise 如下：
+
+```javascript
+getData() {
+  let dfd = Promise.defer()
+  this.api.getList(data).then(res=>{
+    if(!成功) {
+      dfd.reject(res)
+    }
+    dfd.resolve(res)
+  })
+  return dfd.promise;
+}
+
+```
+
+至此 一个 符合 promise A+ 规范的 promise 基本完成
+
+## 规范测试
+
+- 全局安装 `promises-aplus-tests` 进行规范测试， `npm i promises-aplus-tests -g`
+- 编写测试函数
+- 终端运行`promises-aplus-tests promise.js`
 
 ## 通过
 

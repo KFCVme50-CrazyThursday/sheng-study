@@ -143,7 +143,7 @@ class Promise {
   }
 }
 
-// 测试 promise 是否符合规范
+// 解决嵌套
 Promise.defer = Promise.deferred = function () {
   let dfd = {}
   dfd.promise = new Promise((resolve, reject) => {
@@ -153,4 +153,3 @@ Promise.defer = Promise.deferred = function () {
   return dfd
 }
 module.exports = Promise
-
