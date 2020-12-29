@@ -166,6 +166,7 @@ Promise.defer = Promise.deferred = function () {
   })
   return dfd
 }
+
 // 异步并发 同步处理
 Promise.all = function (values) {
   return new Promise((resolve, reject) => {
@@ -189,4 +190,58 @@ Promise.all = function (values) {
     }
   })
 }
+
+Promise.reject = function (value) {
+  return new Promise((resolve, reject) => {
+    reject(value)
+  })
+}
+
+Promise.resolve = function (value) {
+  if (isPromise(value)) {
+    try {
+      let then = value.then
+      return new Promise(then.bind(value))
+    } catch (error) {
+      return new Promise((resolve, reject) => {
+        reject(error)
+      })
+    }
+  } else {
+    return new Promise((resolve, reject) => {
+      resolve(value)
+    })
+  }
+}
 module.exports = Promise
+
+/**
+ * 测试用例
+
+Promise.resolve(
+  new Promise((resolve, reject) => {
+    resolve(11111111)
+  })
+).then(
+  (res) => {
+    console.log('res1', res)
+  },
+  (err) => {
+    console.log('err1', err)
+  }
+)
+
+Promise.resolve(22222222222).then((res) => {
+  console.log('res2', res)
+})
+
+Promise.resolve(new Error(33333)).then(
+  (res) => {
+    console.log('res3', res)
+  },
+  (err) => {
+    console.log('err3', err)
+  }
+)
+ * 
+ */
