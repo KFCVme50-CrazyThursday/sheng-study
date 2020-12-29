@@ -2,6 +2,18 @@ const PENDING = 'pending'
 const RESOLVED = 'resolved'
 const REJECTED = 'rejected'
 
+const isPromise = (value) => {
+  if (
+    (typeof value === 'object' && value !== null) ||
+    typeof value === 'function'
+  ) {
+    if (typeof value.then === 'function') {
+      return true
+    }
+  } else {
+    return false
+  }
+}
 const resolvePromise = (promise2, x, resolve, reject) => {
   // x 与 promise 是同一个对象时候 抛出错误
   if (x === promise2) {
@@ -142,7 +154,9 @@ class Promise {
     return promise2
   }
 }
+// 到此一个 符合 Promise A+ 规范的基本完成
 
+// 扩充 api
 // 解决嵌套
 Promise.defer = Promise.deferred = function () {
   let dfd = {}
@@ -151,5 +165,28 @@ Promise.defer = Promise.deferred = function () {
     dfd.reject = reject
   })
   return dfd
+}
+// 异步并发 同步处理
+Promise.all = function (values) {
+  return new Promise((resolve, reject) => {
+    let arr = [] // 处理结果存储到 数组中
+    let index = 0
+    function processData(key, value) {
+      arr[key] = value
+      if (++index === values.length) {
+        resolve(arr)
+      }
+    }
+    for (let i = 0; i < values.length; i++) {
+      let current = values[i] // 当前结果可能是个 promise
+      if (isPromise(current)) {
+        current.then((data) => {
+          processData(i, data)
+        }, reject)
+      } else {
+        processData(i, current)
+      }
+    }
+  })
 }
 module.exports = Promise
