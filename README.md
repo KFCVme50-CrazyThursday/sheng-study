@@ -48,3 +48,6 @@ emitter.emit(eventName, args)
 //eventName 事件名称 如果不传，则删除所有事件
 emitter.allOff(eventName)
 ```
+
+## 实现一个 符合 promise a+ 规范的 promise
+
