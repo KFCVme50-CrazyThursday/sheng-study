@@ -75,7 +75,7 @@ class Promise {
             throw err
           }
     // 如果是成功就执行成功的回调用  失败就执行失败的回调
-    if (this.state === REJECTED) {
+    if (this.state === RESOLVED) {
       onFulfilled(this.value)
     }
     if (this.state === REJECTED) {
@@ -182,7 +182,7 @@ class Promise {
             throw error
           }
 
-    // 异步时候状态尚未由 peding 转变
+    // 异步时候状态尚未由 peding 转变, 将方法进行收集
     if (this.state === PENDING) {
       this.onResolvedCbs.push(() => {
         onFulfilled(this.value)
@@ -203,6 +203,8 @@ class Promise {
 }
 module.exports = Promise
 ```
+
+到这里一个 promise 初步完成
 
 ## **<font color=red size=6>然而上面依旧存在很多问题 下面进行完善</font>**
 
@@ -242,7 +244,7 @@ then(onFulfilled, onRejected){
         //状态未变更时候可能抛出错误
         try {
           let x = onFulfilled(this.value) // 保存当前回调函数
-          // 将
+          // 链式调用逻辑处理
           resolvePromise(promise2, x, resolve, reject)
         } catch (e) {
           reject(e)
