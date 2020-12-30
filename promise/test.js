@@ -2,40 +2,65 @@
  * 测试用例
  */
 const Promise = require('./Promise')
-
-console.log('================================================')
-
 /**
  * all
  */
 
-// Promise.allSettled([
-//   new Promise((resolve, reject) => setTimeout(() => resolve(1), 2000)),
-//   new Promise((resolve, reject) =>
-//     setTimeout(() => resolve(new Error('Whoops!')), 1000)
-//   ),
-//   Promise.reject(666666666666),
-//   new Promise((resolve, reject) => setTimeout(() => resolve(3), 1500)),
-// ]).then(
-//   (res) => {
-//     console.log('res', res)
-//   },
-//   (err) => {
-//     console.log('err', err)
-//   }
-// )
-console.log('=============================')
-Promise.all([
-  new Promise((resolve) => setTimeout(() => resolve(11111111), 3000)), // 1
+new Promise((resolve, reject) => {
+  console.log('这里立即执行')
+  // resolve 与 reject 只能有一个
+  // resolve('成功了 ，这里会传递到 then 的成功回调 res 里')
+  reject('失败了 ，这里会传递到 then 的失败回调 err 里')
+}).then(
+  (res) => {
+    console.log(res) // 打印上面 resolve 的值
+  },
+  (err) => {
+    console.log(err) // reject时候 打印上面 reject 的值
+  }
+)
+
+Promise.allSettled([
+  new Promise((resolve, reject) => setTimeout(() => resolve(1), 2000)),
+  new Promise((resolve, reject) =>
+    setTimeout(() => resolve(new Error('Whoops!')), 1000)
+  ),
   Promise.reject(666666666666),
-  99999999999999, // 3
-])
-  .then((res) => {
-    console.log('res========', res)
+  new Promise((resolve, reject) => setTimeout(() => resolve(3), 1500)),
+]).then(
+  (res) => {
+    console.log('res', res)
+  },
+  (err) => {
+    console.log('err', err)
+  }
+)
+console.log('=============================')
+// Promise.all([
+//   new Promise((resolve) => setTimeout(() => resolve(11111111), 3000)), // 1
+//   Promise.reject(666666666666),
+//   99999999999999, // 3
+// ])
+//   .then((res) => {
+//     console.log('res========', res)
+//   })
+//   .catch((e) => {
+//     console.log('e', e)
+//   })
+console.log('================================================')
+
+Promise.reject(
+  new Promise((resolve, reject) => {
+    throw new Error(11111111111)
   })
-  .catch((e) => {
-    console.log('e', e)
-  })
+).then(
+  (res) => {
+    console.log('res', res)
+  },
+  (err) => {
+    console.log('err', err)
+  }
+)
 
 /**
  * catch resolve reject

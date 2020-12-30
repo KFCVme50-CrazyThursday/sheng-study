@@ -20,14 +20,24 @@ new Promise((resolve, reject) => {
 )
 ```
 
+分析以上代码：
+
+1. `new` 了个 `promise` , `promise` 中接受一个执行器函数 `executor`(接受 `resolve` `reject` 这两个函数作为参数)
+2. `promise` 内部是立即执行的 →
+3. `promise` 有三种状态： `pending`(等待) `fulfilled`(成功) `rejected`(失败)，初始状态为 `pending` ，当执行成功时候状态会由 `pending` 变为 `fulfilled` ，失败则变为 `rejected`
+   - 状态只能由 `pending` → `fulfilled` 或 `pending` → `rejected` ， 切一旦变更不可改变
+   - 状态的变更分别对应 `then` 中的两个回调函数
+4. `then` 中接受两个回调函数: 成功 失败
+   - `res` 成功回调： 该函数将在 `promise resolved`后运行并接收结果。
+   - `err` 失败回调： 该函数将在 `promise rejected` 后运行并接收 `error`
+
 ```javascript
 const PENDING = 'PENDING'
 const RESOLVED = 'RESOLVED'
 const REJECTED = 'REJECTED'
-//根据以上基本用法书写 首先 promise 接受一个 executor 执行器， executor 里有 resolve, reject 两个函数，其中 new promise 内部是立即执行的
+
 class Promise {
   constructor(executor) {
-    // 这里理解执行 对应上方 A 处
     this.state = PENDING // 初始状态为 pending
     this.reason = undefined // 失败回调时候的原因  即为reject()传递的值
     this.value = undefined // 成功回调的值  即为 resolve() 传递的值
@@ -55,7 +65,7 @@ class Promise {
       reject(error)
     }
   }
-  // then 方法 then 中有两个值 成功的回调与失败的回调 这两值也阔以不穿  不传时候会向外传递
+  // then 方法 then 中有两个值 成功的回调与失败的回调 这两值也阔以不穿
   then(onFulfilled, onRejected) {
     onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : (val) => val
     onRejected =
@@ -75,6 +85,8 @@ class Promise {
 }
 ```
 
+一个基本的 promise 基本完成
+
 ## 当 promise 的 then 中状态未发生变化时候
 
 ```javascript
@@ -93,15 +105,19 @@ new Promise((resolve, reject) => {
 ```
 
 - 有的时候 `then` 中不一定就是 成功 或者 失败 状态可能还是 pending ,
-- 比如下方的代码使用上面的调用会得不到值 正常来说 `resolve(111111)` 会出现在 `console.log('res', res)`，
+- 比如下方的代码使用上面的调用会得不到预期的值 正常来说 `resolve(111111)` 会出现在 `console.log('res', res)`，
 - 但是 因为 `setTimeout` 异步 宏任务会比微任务晚执行 导致 `state` 状态并未由 `pending` 变成 `resolve`, 同理 `reject` 时候亦如此
 - 可以初始化两个 存储 `resolve()` `reject()` 的数组 用于该情况时候进行存储
+  - 有点发布订阅模式那味了。then 中进行订阅(存储异步函数) executor 中进行发布(执行)
 
 ```javascript
 // 修改上方代码 初始化连个数组 添加到 constructor 中
+...
+
 this.onResolvedCbs = [] // the successful callbacks
 this.onRejectedCbs = [] // the failed callbacks
 
+...
 // then 方法中添加是 pending 状态时候的逻辑
 if (this.state === PENDING) {
   this.onResolvedCbs.push(() => {
@@ -112,15 +128,83 @@ if (this.state === PENDING) {
     onRejected(this.reason)
   })
 }
+...
 
+...
 // resolve reject 中分别循环数组 onResolvedCbs onRejectedCbs 执行
 this.onResolvedCbs.forEach((fn) => fn()) // resolve 中
 this.onRejectedCbs.forEach((fn) => fn()) // reject 中
+...
 ```
 
-**<font color=pink size=10>到此一个基本 的 promise 完成</font>**
+**<font color=pink size=6>到此一个初版 的 promise 完成</font>**
 
----
+```javascript
+const PENDING = 'pending' //默认状态
+const RESOLVED = 'resolved' // 成功
+const REJECTED = 'rejected' // 失败
+class Promise {
+  constructor(executor) {
+    this.state = PENDING // 默认状态
+    this.reason = undefined // 失败时候的默认值
+    this.value = undefined // 成功时候的默认值
+    this.onResolvedCbs = [] // 成功时候的回调
+    this.onRejectedCbs = [] // 失败时候的回调
+    // 成功时候的回调
+    let resolve = (value) => {
+      if (this.state === PENDING) {
+        this.state = RESOLVED
+        this.value = value
+        this.onRejectedCbs.forEach((fn) => fn()) // emit  执行
+      }
+    }
+
+    let reject = (reason) => {
+      if (this.state === PENDING) {
+        this.state = REJECTED
+        this.reason = reason
+        this.onRejectedCbs.forEach((fn) => fn())
+      }
+    }
+
+    try {
+      executor(resolve, reject)
+    } catch (error) {
+      reject(error)
+    }
+  }
+  then(onFulfilled, onRejected) {
+    onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : (val) => val
+    onRejected =
+      typeof onRejected === 'function'
+        ? onRejected
+        : (error) => {
+            throw error
+          }
+
+    // 异步时候状态尚未由 peding 转变
+    if (this.state === PENDING) {
+      this.onResolvedCbs.push(() => {
+        onFulfilled(this.value)
+      })
+
+      this.onRejectedCbs.push(() => {
+        onRejected(this.reason)
+      })
+    }
+    // 同步时候直接执行
+    if (this.state === RESOLVED) {
+      onFulfilled(this.value)
+    }
+    if (this.state === REJECTED) {
+      onRejected(this.reason)
+    }
+  }
+}
+module.exports = Promise
+```
+
+## **<font color=red size=6>然而上面依旧存在很多问题 下面进行完善</font>**
 
 ## 链式调用问题
 
@@ -144,8 +228,9 @@ new Promise((resolve, reject) => {
 
 **我们在 `then` 中可以像如上代码那样进行链式调用，接下来进行实现。**
 
+- then 函数是可以链式调用的 必然是返回了一个新的 promise
 - 而 `then` 中的 **回调函数** 返回的 也可能是个 `promise` ，当是个 `promise` 时候会以该 `promise` 的状态向外传递
-- 假设返回的是个 promise，记为 **promise2**，则需要先拿到当前的 `promise` ，对当前 `promise` 的 `resolve` `reject` 回调函数委托到外层 `promise2` 上进行处理，使用 `setTimeout` 拿到当前 `promise`,抽离出 `resolvePromise`函数，而该函数恰是链式调用的关键所在
+- 假设返回的是个 promise，记为 **promise2**，则需要先拿到当前的 `promise` ，对当前 `promise` 的 `resolve` `reject` 回调函数委托到外层 `promise2` 上进行处理，使用 `setTimeout` 拿到 `promise2`,抽离出 `resolvePromise`函数，而该函数恰是链式调用的关键所在
 
 ```javascript
 ...
@@ -157,6 +242,7 @@ then(onFulfilled, onRejected){
         //状态未变更时候可能抛出错误
         try {
           let x = onFulfilled(this.value) // 保存当前回调函数
+          // 将
           resolvePromise(promise2, x, resolve, reject)
         } catch (e) {
           reject(e)
@@ -175,7 +261,7 @@ then(onFulfilled, onRejected){
 
 ![处理描述](../images/resolvePromise.png)
 
-翻译过啦就是
+翻译过啦就是(百度抄来的)
 
 - 2.3.1. 如果 promise 和 x 指向同一个对象，promise 将拒绝执行且抛出一个 TypeError 作为拒因。
 - 2.3.2. 如果 x 是一个 promise 对象。接收它的状态：
@@ -195,20 +281,31 @@ then(onFulfilled, onRejected){
   - 2.3.3.4. 如果 then 不是一个函数，则以 x 为值执行 promise
 - 2.3.4. 如果 x 不是一个对象或者函数，，则以 x 为值执行 promise
 
+上方翻译成人话就是说：
+
+1. 当 x 与 promise 相等时候 抛出一个错误
+2. 当 x 是一个对象或者函数的时候。并且当 x 是一个函数时候必然存在 then 方法，then 方法可能会被 Object.defineProperty 定义 ，需要进行容错处理，如果报错直接 以当前错误原因作为 reject 抛出
+3. 当 x 存在 then 的时候，直接调用 then 并以 当前调用成功的 resolve 作为 resolve 抛出，如果失败 则 以当前失败的 reject 作为 promise 失败的原因
+4. x.then 中可能还存在以上情况，递归
+5. 当 取反 2 时候，x 既是一个普通值 直接 resolve
+
 ```javascript
 const resolvePromise = (promise2, x, resolve, reject) => {
   // x 与 promise 是同一个对象时候 抛出错误
   if (x === promise2) {
+    // 2.3.1.
     return reject(
       new TypeError('Chaining cycle detected for promise #<Promise>')
     )
   }
   // 当 x 是一个对象或者函数时候
   if ((typeof x === 'object' && x !== null) || typeof x === 'function') {
-    let called
+    let called // 防止重复 resolve reject  对应上方2.3.3.3.3.
     try {
+      //防止then可能是通过 Object.defineProperty 定义的方法，进行 错误处理
       let then = x.then
       if (typeof then === 'function') {
+        // 当是一个promise时候必然具有 then 方法
         then.call(
           x,
           (y) => {
@@ -216,9 +313,11 @@ const resolvePromise = (promise2, x, resolve, reject) => {
               return
             }
             called = true
+            // 依然可能是 promise 递归调用
             resolvePromise(promise2, y, resolve, reject)
           },
           (r) => {
+            // 失败时候直接 reject
             if (called) {
               return
             }
@@ -270,7 +369,6 @@ Promise.defer = Promise.deferred = function () {
   })
   return dfd
 }
-module.export = Promise
 ```
 
 以上案例代码使用改版后的 promise 如下：
@@ -289,15 +387,14 @@ getData() {
 
 ```
 
-至此 一个 符合 promise A+ 规范的 promise 基本完成
+至此 一个 符合 promise A+ 规范的 promise 基本完成，进行导出 `module.export = Promise`
 
 ## 规范测试
 
 - 全局安装 `promises-aplus-tests` 进行规范测试， `npm i promises-aplus-tests -g`
-- 编写测试函数
-- 终端运行`promises-aplus-tests promise.js`
+- 终端到达文件夹后运行`promises-aplus-tests promise.js`
 
-## 通过
+## 测试结果
 
 ![规范测试](../images/success.png)
 

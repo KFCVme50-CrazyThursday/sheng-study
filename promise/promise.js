@@ -14,6 +14,7 @@ const isPromise = (value) => {
     return false
   }
 }
+
 const resolvePromise = (promise2, x, resolve, reject) => {
   // x 与 promise 是同一个对象时候 抛出错误
   if (x === promise2) {
@@ -65,7 +66,7 @@ const resolvePromise = (promise2, x, resolve, reject) => {
 
 class Promise {
   constructor(executor) {
-    this.state = 'pending' // default state
+    this.state = PENDING // default state
     this.value = undefined // successful value
     this.reason = undefined // failed value
     this.onResolvedCbs = [] // the successful callbacks
@@ -75,7 +76,7 @@ class Promise {
       if (this.state === PENDING) {
         this.value = value
         this.state = RESOLVED
-        this.onResolvedCbs.forEach((fn) => fn()) // emit
+        this.onResolvedCbs.forEach((fn) => fn())
       }
     }
 
@@ -128,7 +129,7 @@ class Promise {
           }, 0)
         })
       }
-      //  同步
+
       if (this.state === RESOLVED) {
         setTimeout(() => {
           //状态未变更时候可能抛出错误
@@ -141,6 +142,7 @@ class Promise {
           }
         }, 0)
       }
+
       if (this.state === REJECTED) {
         setTimeout(() => {
           try {
