@@ -9,20 +9,33 @@ console.log('================================================')
  * all
  */
 
-Promise.allSettled([
-  new Promise((resolve, reject) => setTimeout(() => resolve(1), 1000)),
-  new Promise((resolve, reject) =>
-    setTimeout(() => reject(new Error('Whoops!')), 2000)
-  ),
-  new Promise((resolve, reject) => setTimeout(() => resolve(3), 3000)),
-]).then(
-  (res) => {
-    console.log('res', res)
-  },
-  (err) => {
-    console.log('err', err)
-  }
-)
+// Promise.allSettled([
+//   new Promise((resolve, reject) => setTimeout(() => resolve(1), 2000)),
+//   new Promise((resolve, reject) =>
+//     setTimeout(() => resolve(new Error('Whoops!')), 1000)
+//   ),
+//   Promise.reject(666666666666),
+//   new Promise((resolve, reject) => setTimeout(() => resolve(3), 1500)),
+// ]).then(
+//   (res) => {
+//     console.log('res', res)
+//   },
+//   (err) => {
+//     console.log('err', err)
+//   }
+// )
+console.log('=============================')
+Promise.all([
+  new Promise((resolve) => setTimeout(() => resolve(11111111), 3000)), // 1
+  Promise.reject(666666666666),
+  99999999999999, // 3
+])
+  .then((res) => {
+    console.log('res========', res)
+  })
+  .catch((e) => {
+    console.log('e', e)
+  })
 
 /**
  * catch resolve reject
