@@ -22,9 +22,33 @@ Promise.resolve(11111).then(
 Promise.reject(22222222222).then(null, (err) => {
   console.log('err', err)
 })
+
+/**
+ * allSettled 
+ */
+const promise1 = Promise.resolve(3)
+const promise2 = new Promise((resolve, reject) =>
+  setTimeout(reject, 100, 'foo')
+)
+const promises = [promise1, promise2]
+
+Promise.allSettled(promises).then((results) =>
+  results.forEach((result) => console.log(result))
+)
+/**
+ * 打印结果如下
+ {
+  status: 'fulfilled'
+  value: 3
+}
+{
+  reason: 'foo'
+  status: 'rejected'
+}
+ */
+
 /**
  * 
-
 Promise.resolve(
   new Promise((resolve, reject) => {
     resolve(11111111)

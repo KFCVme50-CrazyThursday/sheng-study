@@ -185,30 +185,10 @@ Promise.defer = Promise.deferred = function () {
   })
   return dfd
 }
-// Promise 类有 5 种静态方法： all  allSettled  race  resolve  reject
-// 异步并发 同步处理
-Promise.all = function (values) {
-  return new Promise((resolve, reject) => {
-    let arr = [] // 处理结果存储到 数组中
-    let index = 0
-    function processData(key, value) {
-      arr[key] = value
-      if (++index === values.length) {
-        resolve(arr)
-      }
-    }
-    for (let i = 0; i < values.length; i++) {
-      let current = values[i] // 当前结果可能是个 promise
-      if (isPromise(current)) {
-        current.then((data) => {
-          processData(i, data)
-        }, reject)
-      } else {
-        processData(i, current)
-      }
-    }
-  })
-}
+/**
+ * 扩展 Promise 的五中静态方法
+ * all  allSettled  race  resolve  reject
+ */
 
 Promise.reject = function (value) {
   return new Promise((resolve, reject) => {
@@ -232,4 +212,52 @@ Promise.resolve = function (value) {
     })
   }
 }
+
+/**
+ * @param {values} 可迭代数组 每一项都是一个 promise
+ *  接受一个 promise 数组作为参数（从技术上讲，它可以是任何可迭代的，但通常是一个数组）并返回一个新的 promise。
+ * 所有的 resolve 才会 resolve,任何一个 reject 就会 reject
+ * !更适合彼此相互依赖或者在其中任何一个 reject 时立即结束。
+ */
+Promise.all = function (values) {
+  return new Promise((resolve, reject) => {
+    let arr = [] // 处理结果存储到 数组中
+    let index = 0
+    function processData(key, value) {
+      arr[key] = value
+      if (++index === values.length) {
+        resolve(arr)
+      }
+    }
+    for (let i = 0; i < values.length; i++) {
+      let current = values[i] // 当前结果可能是个 promise
+      if (isPromise(current)) {
+        current.then((data) => {
+          processData(i, data)
+        }, reject)
+      } else {
+        processData(i, current)
+      }
+    }
+  })
+}
+
+/**
+ * 返回一个在所有给定的promise都已经 resolved 或 rejected 后的promise，
+ * 结果里每一项都是一个对象数组，每个对象表示对应的promise结果。
+ * !当您有多个彼此不依赖的异步任务成功完成时，或者您总是想知道每个promise的结果时，通常使用它。
+ * {status:"fulfilled", value:result} 对于成功的响应，
+ * {status:"rejected", reason:error} 对于 error。
+ */
+Promise.allSettled = function (values) {
+  const rejectHandler = (reason) => ({ status: 'rejected', reason })
+  const resolveHandler = (value) => ({ status: 'fulfilled', value })
+  const convertedPromises = values.map((p) =>
+    Promise.resolve(p).then(resolveHandler, rejectHandler)
+  )
+  return Promise.all(convertedPromises)
+}
+
+Promise.race = function () {}
+
 module.exports = Promise
