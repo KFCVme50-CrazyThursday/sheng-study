@@ -93,6 +93,7 @@ class Promise {
       reject(e)
     }
   }
+
   then(onFulfilled, onRejected) {
     // then 方法中可以 不接受参数 为空时候向下传递
     onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : (val) => val
@@ -153,6 +154,24 @@ class Promise {
     })
     return promise2
   }
+
+  catch(cb) {
+    return this.then(null, cb)
+  }
+
+  finally(cb) {
+    // cb 必须接受一个函数 如果不是函数可能会报错  暂未做处理
+    return this.then(
+      (data) => {
+        return Promise.resolve(cb()).then(() => data)
+      },
+      (err) => {
+        return Promise.resolve(cb()).then(() => {
+          throw err
+        })
+      }
+    )
+  }
 }
 // 到此一个 符合 Promise A+ 规范的基本完成
 
@@ -166,7 +185,7 @@ Promise.defer = Promise.deferred = function () {
   })
   return dfd
 }
-
+// Promise 类有 5 种静态方法： all  allSettled  race  resolve  reject
 // 异步并发 同步处理
 Promise.all = function (values) {
   return new Promise((resolve, reject) => {
@@ -214,34 +233,3 @@ Promise.resolve = function (value) {
   }
 }
 module.exports = Promise
-
-/**
- * 测试用例
-
-Promise.resolve(
-  new Promise((resolve, reject) => {
-    resolve(11111111)
-  })
-).then(
-  (res) => {
-    console.log('res1', res)
-  },
-  (err) => {
-    console.log('err1', err)
-  }
-)
-
-Promise.resolve(22222222222).then((res) => {
-  console.log('res2', res)
-})
-
-Promise.resolve(new Error(33333)).then(
-  (res) => {
-    console.log('res3', res)
-  },
-  (err) => {
-    console.log('err3', err)
-  }
-)
- * 
- */
