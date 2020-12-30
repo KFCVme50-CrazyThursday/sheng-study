@@ -243,8 +243,7 @@ Promise.all = function (values) {
 }
 
 /**
- * 返回一个在所有给定的promise都已经 resolved 或 rejected 后的promise，
- * 结果里每一项都是一个对象数组，每个对象表示对应的promise结果。
+ * 返回一个在所有给定的promise都已经 resolved 或 rejected 后的promise，结果里每一项都是一个对象数组，每个对象表示对应的promise结果。
  * !当您有多个彼此不依赖的异步任务成功完成时，或者您总是想知道每个promise的结果时，通常使用它。
  * {status:"fulfilled", value:result} 对于成功的响应，
  * {status:"rejected", reason:error} 对于 error。
@@ -257,7 +256,16 @@ Promise.allSettled = function (values) {
   )
   return Promise.all(convertedPromises)
 }
-
-Promise.race = function () {}
+/**
+ * 只要有一个状态发生变化结果立马返回
+ */
+Promise.race = function (values) {
+  return new Promise((resolve, reject) => {
+    for (let i = 0; i < values.length; i++) {
+      let current = values[i]
+      Promise.resolve(current).then(resolve, reject)
+    }
+  })
+}
 
 module.exports = Promise

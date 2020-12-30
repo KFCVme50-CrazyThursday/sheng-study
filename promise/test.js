@@ -1,8 +1,34 @@
 /**
  * 测试用例
  */
+const Promise = require('./Promise')
 
-const Promise = require('./promise')
+console.log('================================================')
+
+/**
+ * all
+ */
+
+Promise.allSettled([
+  new Promise((resolve, reject) => setTimeout(() => resolve(1), 1000)),
+  new Promise((resolve, reject) =>
+    setTimeout(() => reject(new Error('Whoops!')), 2000)
+  ),
+  new Promise((resolve, reject) => setTimeout(() => resolve(3), 3000)),
+]).then(
+  (res) => {
+    console.log('res', res)
+  },
+  (err) => {
+    console.log('err', err)
+  }
+)
+
+/**
+ * catch resolve reject
+ */
+
+/**
 let promise = new Promise((resolve, reject) => {
   reject('Whoops!')
 })
@@ -22,19 +48,41 @@ Promise.resolve(11111).then(
 Promise.reject(22222222222).then(null, (err) => {
   console.log('err', err)
 })
+*/
 
 /**
- * allSettled 
+ * allSettled
  */
-const promise1 = Promise.resolve(3)
-const promise2 = new Promise((resolve, reject) =>
-  setTimeout(reject, 100, 'foo')
-)
-const promises = [promise1, promise2]
 
-Promise.allSettled(promises).then((results) =>
-  results.forEach((result) => console.log(result))
-)
+// const promise1 = Promise.resolve(3)
+// const promise2 = new Promise((resolve, reject) =>
+//   setTimeout(reject, 100, 'foo')
+// )
+// const promises = [promise1, promise2]
+
+// Promise.allSettled(promises).then((results) =>
+//   results.forEach((result) => console.log(result))
+// )
+
+/**
+ * race
+ */
+/**
+const promise1 = new Promise((resolve, reject) => {
+  setTimeout(resolve, 500, 'one')
+})
+
+const promise2 = new Promise((resolve, reject) => {
+  setTimeout(reject, 100, 'two')
+})
+
+Promise.race([promise1, promise2]).then((value) => {
+  console.log(value)
+  // Both resolve, but promise2 is faster
+})
+* 
+ */
+
 /**
  * 打印结果如下
  {

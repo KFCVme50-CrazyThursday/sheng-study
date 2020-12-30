@@ -300,3 +300,9 @@ getData() {
 ## 通过
 
 ![规范测试](../images/success.png)
+
+## 扩展 5 个静态方法 2 个实例方法
+
+### 实例方法: catch finally
+
+### 静态方法 reject resolve all allSettled race
